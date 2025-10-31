@@ -15,18 +15,23 @@ android {
         applicationId = "com.example.basics"
         minSdk = 28
         targetSdk = 34
-        versionCode = 5            // increment integer (previous was 2 for 1.0.1)
-        versionName = "1.5.0"       // new semantic version
+        versionCode = 5              // Increment for each new release
+        versionName = "1.5.0"        // Semantic version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ✅ Signing configuration for release builds
+    // ✅ Secure signing config using environment variables (with fallback)
     signingConfigs {
         create("release") {
-            storeFile = file("my-release-key.jks")
-            storePassword = "123456"     // ⚠️ use your real password
-            keyAlias = "release_key"
-            keyPassword = "123456"       // ⚠️ same as above
+            // Path to your keystore (default: app/my-release-key.jks)
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_FILE")
+                ?: "app/my-release-key.jks"
+            storeFile = file(keystorePath)
+
+            // Use environment vars OR fallback to local test values
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "123456"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "release_key"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "123456"
         }
     }
 
@@ -37,11 +42,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // ✅ Use the secure release signing config
             signingConfig = signingConfigs.getByName("release")
         }
 
         debug {
-            // For debug builds, no signing needed
+            // Debug builds skip signing
             isMinifyEnabled = false
         }
     }
