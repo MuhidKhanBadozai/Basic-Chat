@@ -70,7 +70,7 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 🟩 Input bar and Send button
+        // 🟨 Input bar and Send button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,7 +88,7 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
                     unfocusedTextColor = Color.White,
                     focusedContainerColor = Color.Black,
                     unfocusedContainerColor = Color.Black,
-                    cursorColor = Color.Green,
+                    cursorColor = Color.Yellow,
                     focusedIndicatorColor = Color.Black,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
@@ -107,7 +107,7 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00C853), // bright green
+                    containerColor = Color(0xFFFFD600), // bright yellow
                     contentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(8.dp)
@@ -120,7 +120,7 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
 
 @Composable
 fun MessageBubble(message: Message, isMine: Boolean) {
-    val bgColor = if (isMine) Color(0xFF1B5E20) else Color(0xFF2E2E2E) // green mine, dark gray others
+    val bgColor = if (isMine) Color(0xFFB8860B) else Color(0xFF2E2E2E) // dark yellow mine, dark gray others
     val textColor = Color.White
 
     Row(
@@ -162,18 +162,18 @@ fun NewMessageDivider() {
     ) {
         Divider(
             modifier = Modifier.weight(1f),
-            color = Color.Green,
+            color = Color.Yellow,
             thickness = 1.dp
         )
         Text(
             "  New Messages  ",
-            color = Color.Green,
+            color = Color.Yellow,
             fontSize = 12.sp,
             textAlign = TextAlign.Center
         )
         Divider(
             modifier = Modifier.weight(1f),
-            color = Color.Green,
+            color = Color.Yellow,
             thickness = 1.dp
         )
     }
