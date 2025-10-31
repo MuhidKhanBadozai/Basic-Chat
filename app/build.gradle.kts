@@ -3,22 +3,31 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
-    // 👇 this line is correct — just keep it here
+    // 👇 Firebase plugin
     id("com.google.gms.google-services")
-
 }
 
 android {
     namespace = "com.example.basics"
-    compileSdk = 34 // ✅ use direct number, not "release(36)"
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.basics"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0" // ✅ first release version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // ✅ Signing configuration for release builds
+    signingConfigs {
+        create("release") {
+            storeFile = file("my-release-key.jks")
+            storePassword = "123456"     // ⚠️ use your real password
+            keyAlias = "release_key"
+            keyPassword = "123456"       // ⚠️ same as above
+        }
     }
 
     buildTypes {
@@ -28,6 +37,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+
+        debug {
+            // For debug builds, no signing needed
+            isMinifyEnabled = false
         }
     }
 
@@ -56,10 +71,13 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // --- Firebase (core + Firestore) ---
-    implementation(platform("com.google.firebase:firebase-bom:33.5.1")) // ✅ important
-    implementation("com.google.firebase:firebase-firestore-ktx") // ✅ add manually (instead of libs)
+    // --- Firebase ---
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx:22.1.0")
+
+    // --- Navigation ---
+    implementation("androidx.navigation:navigation-compose:2.8.0")
 
     // --- Testing ---
     testImplementation(libs.junit)
@@ -69,7 +87,4 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-
-    implementation("androidx.navigation:navigation-compose:2.8.0")
 }
