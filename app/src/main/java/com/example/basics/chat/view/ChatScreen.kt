@@ -30,20 +30,29 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
     val coroutineScope = rememberCoroutineScope()
 
     val firstNewMessageIndex = remember(messages, lastReadTimestamp) {
-        messages.indexOfFirst { it.timestamp > lastReadTimestamp }
+        if (lastReadTimestamp == 0L) -1 else messages.indexOfFirst { it.timestamp > lastReadTimestamp }
     }
 
-    LaunchedEffect(messages) {
+    // Scroll to bottom if no new messages
+    LaunchedEffect(messages, firstNewMessageIndex) {
         if (firstNewMessageIndex == -1 && messages.isNotEmpty()) {
             coroutineScope.launch {
-                listState.scrollToItem(messages.lastIndex)
+                listState.scrollToItem(messages.size - 1)
             }
+        }
+    }
+
+    // When the user leaves the screen, mark all messages as read
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.updateLastReadTimestamp()
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.Black)
             .padding(12.dp)
     ) {
         LazyColumn(
@@ -72,8 +81,18 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
             TextField(
                 value = input,
                 onValueChange = { input = it },
-                placeholder = { Text("Type a message") },
-                modifier = Modifier.weight(1f)
+                placeholder = { Text("Type a message", color = Color.Gray) },
+                modifier = Modifier.weight(1f),
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = Color.Black,
+                    unfocusedContainerColor = Color.Black,
+                    cursorColor = Color.Green,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                )
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -84,9 +103,14 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
                         viewModel.sendMessage(myName, input)
                         input = ""
                     }
-                }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00C853), // bright green
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Send")
+                Text("Send", color = Color.Black)
             }
         }
     }
@@ -94,7 +118,8 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
 
 @Composable
 fun MessageBubble(message: Message, isMine: Boolean) {
-    val bgColor = if (isMine) Color(0xFFD1F7C4) else Color(0xFFF0F0F0)
+    val bgColor = if (isMine) Color(0xFF1B5E20) else Color(0xFF2E2E2E) // green mine, dark gray others
+    val textColor = Color.White
 
     Row(
         modifier = Modifier
@@ -105,19 +130,21 @@ fun MessageBubble(message: Message, isMine: Boolean) {
         Column(
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(bgColor)
-                .padding(8.dp)
+                .padding(10.dp)
         ) {
             Text(
                 text = message.sender,
                 style = MaterialTheme.typography.labelSmall,
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                color = Color.LightGray
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = message.text,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = textColor
             )
         }
     }
@@ -133,17 +160,18 @@ fun NewMessageDivider() {
     ) {
         Divider(
             modifier = Modifier.weight(1f),
-            color = Color.Gray,
+            color = Color.Green,
             thickness = 1.dp
         )
         Text(
             "  New Messages  ",
-            color = Color.Gray,
-            fontSize = 12.sp
+            color = Color.Green,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center
         )
         Divider(
             modifier = Modifier.weight(1f),
-            color = Color.Gray,
+            color = Color.Green,
             thickness = 1.dp
         )
     }
