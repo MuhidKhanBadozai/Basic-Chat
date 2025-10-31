@@ -15,8 +15,8 @@ android {
         applicationId = "com.example.basics"
         minSdk = 28
         targetSdk = 34
-        versionCode = 3             // increment integer (previous was 2 for 1.0.1)
-        versionName = "1.0.2"       // new semantic version
+        versionCode = 4            // increment integer (previous was 2 for 1.0.1)
+        versionName = "1.0.3"       // new semantic version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
