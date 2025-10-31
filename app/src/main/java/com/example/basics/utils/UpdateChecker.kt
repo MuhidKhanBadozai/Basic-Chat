@@ -1,15 +1,21 @@
 package com.example.basics.utils
 
+import android.Manifest
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -21,6 +27,14 @@ fun UpdateChecker(context: Context) {
     var latestVersion by remember { mutableStateOf<String?>(null) }
     var downloadUrl by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var hasPermissions by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            hasPermissions = permissions.values.all { it }
+        }
+    )
 
     LaunchedEffect(Unit) {
         val result = fetchLatestRelease()
@@ -39,20 +53,40 @@ fun UpdateChecker(context: Context) {
     }
 
     if (showDialog && latestVersion != null && downloadUrl != null) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Update Available") },
-            text = { Text("A new version (${latestVersion}) is available. Would you like to update now?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    downloadApk(context, downloadUrl!!, "BasicChat_${latestVersion}.apk")
-                    showDialog = false
-                }) { Text("Update") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Later") }
+        if (hasPermissions) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Update Available") },
+                text = { Text("A new version (${latestVersion}) is available. Would you like to update now?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        downloadApk(context, downloadUrl!!, "BasicChat_${latestVersion}.apk")
+                        showDialog = false
+                    }) { Text("Update") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false }) { Text("Later") }
+                }
+            )
+        } else {
+            LaunchedEffect(Unit) {
+                val permissionsToRequest = mutableListOf<String>()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.REQUEST_INSTALL_PACKAGES) != PackageManager.PERMISSION_GRANTED) {
+                        permissionsToRequest.add(Manifest.permission.REQUEST_INSTALL_PACKAGES)
+                    }
+                }
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+
+                if (permissionsToRequest.isNotEmpty()) {
+                    permissionLauncher.launch(permissionsToRequest.toTypedArray())
+                } else {
+                    hasPermissions = true
+                }
             }
-        )
+        }
     }
 }
 
