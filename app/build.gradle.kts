@@ -25,7 +25,7 @@ android {
         create("release") {
             // Path to your keystore (default: app/my-release-key.jks)
             val keystorePath = System.getenv("ANDROID_KEYSTORE_FILE")
-                ?: "app/my-release-key.jks"
+                ?: "my-release-key.jks"
             storeFile = file(keystorePath)
 
             // Use environment vars OR fallback to local test values

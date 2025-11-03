@@ -3,7 +3,7 @@ name: Build and Release APK
 on:
   push:
     tags:
-      - '1.6.0'   # Triggers when you push a tag like v1.0.3
+      - '*'   # Triggers when you push a tag like v1.0.3
 
 jobs:
   build:
