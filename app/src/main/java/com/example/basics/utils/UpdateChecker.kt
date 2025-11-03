@@ -1,18 +1,24 @@
 package com.example.basics.utils
 
 import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.widget.Toast
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -29,7 +35,7 @@ fun UpdateChecker(context: Context) {
             val currentVersion =
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
-            // compare current app version with GitHub version
+            // Compare current app version with GitHub version
             if (version != currentVersion) {
                 latestVersion = version
                 downloadUrl = url
@@ -64,8 +70,7 @@ suspend fun fetchLatestRelease(): Pair<String, String>? = withContext(Dispatcher
         val response = connection.inputStream.bufferedReader().use { it.readText() }
         val json = JSONObject(response)
         val tag = json.getString("tag_name").removePrefix("v")
-        val assetUrl =
-            json.getJSONArray("assets").getJSONObject(0).getString("browser_download_url")
+        val assetUrl = json.getJSONArray("assets").getJSONObject(0).getString("browser_download_url")
         Pair(tag, assetUrl)
     } catch (e: Exception) {
         e.printStackTrace()
@@ -82,10 +87,50 @@ fun downloadApk(context: Context, apkUrl: String, fileName: String) {
         .setMimeType("application/vnd.android.package-archive")
 
     val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    manager.enqueue(request)
+    val downloadId = manager.enqueue(request)
 
-    // Open the Downloads app after enqueuing the download
-    val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    context.startActivity(intent)
+    Toast.makeText(context, "Downloading update…", Toast.LENGTH_SHORT).show()
+
+    val onComplete = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
+            try {
+                val file = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    fileName
+                )
+
+                val fileUri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    FileProvider.getUriForFile(
+                        context,
+                        context.packageName + ".provider",
+                        file
+                    )
+                } else {
+                    Uri.fromFile(file)
+                }
+
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(fileUri, "application/vnd.android.package-archive")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                }
+
+                Toast.makeText(context, "Installing update…", Toast.LENGTH_SHORT).show()
+                context.startActivity(installIntent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(context, "Install failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+
+            try {
+                context.unregisterReceiver(this)
+            } catch (_: Exception) {}
+        }
+    }
+
+    ContextCompat.registerReceiver(
+        context,
+        onComplete,
+        IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+        ContextCompat.RECEIVER_NOT_EXPORTED
+    )
 }
