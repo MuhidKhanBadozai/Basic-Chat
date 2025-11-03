@@ -3,7 +3,11 @@ name: Build and Release APK
 on:
   push:
     tags:
-      - '*'   # Triggers when you push a tag like v1.0.3
+      - '*'   # Triggers when you push a tag like 1.0.3 or v1.0.3
+
+# ✅ Give GitHub Actions permission to create releases
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -21,7 +25,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3️⃣ Set up Gradle cache
+      # 3️⃣ Cache Gradle dependencies
       - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
@@ -36,7 +40,7 @@ jobs:
       - name: Build release APK
         run: ./gradlew assembleRelease
 
-      # 5️⃣ Upload the APK to GitHub Releases
+      # 5️⃣ Upload APK to GitHub Releases
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
