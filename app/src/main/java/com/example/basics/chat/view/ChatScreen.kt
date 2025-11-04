@@ -1,6 +1,9 @@
 package com.example.basics.chat.view
 
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -12,6 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -116,8 +122,12 @@ fun ChatScreen(viewModel: ChatViewModel, myName: String = "User1") {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MessageBubble(message: Message, isMine: Boolean) {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
     val bgColor = if (isMine) Color(0xFFB8860B) else Color(0xFF2E2E2E) // dark yellow mine, dark gray others
     val textColor = Color.White
 
@@ -132,6 +142,13 @@ fun MessageBubble(message: Message, isMine: Boolean) {
                 .widthIn(max = 280.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(bgColor)
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = {
+                        clipboardManager.setText(AnnotatedString(message.text))
+                        Toast.makeText(context, "Message Copied", Toast.LENGTH_SHORT).show()
+                    }
+                )
                 .padding(10.dp)
         ) {
             Text(
